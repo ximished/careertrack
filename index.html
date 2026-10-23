@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareerTrack - Job Application Tracker</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <header class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-600 text-white font-bold text-lg shadow-sm">CT</span>
+            <h1 class="text-2xl font-bold text-slate-900">CareerTrack</h1>
+          </div>
+          <p class="text-sm text-slate-500 mt-1">Track applications, interviews, and offers in one organized dashboard.</p>
+        </div>
+        
+        <!-- Header Actions: Export, Import, Reset -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <button type="button" id="export-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
+            <span>📥</span> Export JSON
+          </button>
+          <label for="import-file" class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
+            <span>📤</span> Import Backup
+          </label>
+          <input type="file" id="import-file" accept=".json" class="hidden">
+          <button type="button" id="reset-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
+            <span>🔄</span> Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-100">
+        <div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-200/60">
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Applied</p>
+          <p id="stat-total" class="text-xl sm:text-2xl font-bold text-slate-900 mt-0.5">0</p>
+        </div>
+        <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-200/60">
+          <p class="text-xs font-medium text-amber-700 uppercase tracking-wider">Interviewing</p>
+          <p id="stat-interviewing" class="text-xl sm:text-2xl font-bold text-amber-700 mt-0.5">0</p>
+        </div>
+        <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-200/60">
+          <p class="text-xs font-medium text-emerald-700 uppercase tracking-wider">Offers</p>
+          <p id="stat-offers" class="text-xl sm:text-2xl font-bold text-emerald-700 mt-0.5">0</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Add Application Form -->
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+      <h2 class="text-lg font-semibold text-slate-900 mb-4">Add New Application</h2>
+      <form id="app-form" class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+        <div class="sm:col-span-4">
+          <label for="company-input" class="block text-xs font-medium text-slate-700 mb-1">Company Name</label>
+          <input type="text" id="company-input" required placeholder="e.g. Stripe, Google, Acme Inc"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div class="sm:col-span-4">
+          <label for="role-input" class="block text-xs font-medium text-slate-700 mb-1">Role / Position</label>
+          <input type="text" id="role-input" required placeholder="e.g. Junior Web Developer"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
+        <div class="sm:col-span-4">
+          <label for="status-input" class="block text-xs font-medium text-slate-700 mb-1">Status</label>
+          <select id="status-input"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+            <option value="Applied">Applied</option>
+            <option value="Interviewing">Interviewing</option>
+            <option value="Offer">Offer</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="sm:col-span-12 flex justify-end pt-2">
+          <button type="submit"
+            class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
+            + Add to Pipeline
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- In-App Notification Toast -->
+    <div id="toast-banner" class="hidden transition-all duration-300 rounded-xl p-3 text-sm flex items-center justify-between border" role="status">
+      <span id="toast-message" class="font-medium"></span>
+      <button id="toast-close" type="button" class="text-xs underline ml-3 font-semibold focus:outline-none">Dismiss</button>
+    </div>
+
+    <!-- Applications List Section -->
+    <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-slate-900">Application Pipeline</h2>
+        <span id="list-count" class="text-xs text-slate-500 font-medium">0 active items</span>
+      </div>
+
+      <!-- Search & Filter Controls -->
+      <div class="flex flex-col sm:flex-row gap-3 mb-6">
+        <div class="relative flex-1">
+          <input type="text" id="search-input" placeholder="Search by company or role..."
+            class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+          <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+        </div>
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="filter-tabs">
+          <button type="button" data-filter="All" class="filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-indigo-600 text-white">All</button>
+          <button type="button" data-filter="Applied" class="filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">Applied</button>
+          <button type="button" data-filter="Interviewing" class="filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">Interviewing</button>
+          <button type="button" data-filter="Offer" class="filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">Offers</button>
+          <button type="button" data-filter="Rejected" class="filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200">Rejected</button>
+        </div>
+      </div>
+
+      <!-- Empty State: No Applications Added -->
+      <div id="empty-state" class="text-center py-12 px-4 border-2 border-dashed border-slate-200 rounded-xl">
+        <div class="w-12 h-12 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl font-bold mb-3">
+          📋
+        </div>
+        <h3 class="text-sm font-semibold text-slate-800">No applications added yet</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Fill out the form above to add your first job application. It will be saved automatically in your browser.</p>
+      </div>
+
+      <!-- Empty State: Search/Filter No Match -->
+      <div id="empty-search-state" class="hidden text-center py-12 px-4 border-2 border-dashed border-slate-200 rounded-xl">
+        <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-xl font-bold mb-3">
+          🔎
+        </div>
+        <h3 class="text-sm font-semibold text-slate-800">No matching applications found</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Try clearing your search query or switching to a different status filter.</p>
+      </div>
+
+      <!-- Applications Container -->
+      <div id="applications-list" class="space-y-3"></div>
+    </section>
+
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'careertrack_apps_v1';
+    let applications = [];
+    let currentFilter = 'All';
+    let searchQuery = '';
+
+    const appForm = document.getElementById('app-form');
+    const companyInput = document.getElementById('company-input');
+    const roleInput = document.getElementById('role-input');
+    const statusInput = document.getElementById('status-input');
+    const searchInput = document.getElementById('search-input');
+    const filterTabs = document.getElementById('filter-tabs');
+    const applicationsList = document.getElementById('applications-list');
+    const emptyState = document.getElementById('empty-state');
+    const emptySearchState = document.getElementById('empty-search-state');
+    const statTotal = document.getElementById('stat-total');
+    const statInterviewing = document.getElementById('stat-interviewing');
+    const statOffers = document.getElementById('stat-offers');
+    const listCount = document.getElementById('list-count');
+    const toastBanner = document.getElementById('toast-banner');
+    const toastMessage = document.getElementById('toast-message');
+    const toastClose = document.getElementById('toast-close');
+    const exportBtn = document.getElementById('export-btn');
+    const importFile = document.getElementById('import-file');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let toastTimeout = null;
+    function showToast(message, type = 'success') {
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastBanner.className = 'transition-all duration-300 rounded-xl p-3 text-sm flex items-center justify-between border ';
+      toastBanner.className += (type === 'success') 
+        ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+        : 'bg-slate-100 text-slate-800 border-slate-200';
+      toastMessage.textContent = message;
+      toastBanner.classList.remove('hidden');
+      toastTimeout = setTimeout(() => toastBanner.classList.add('hidden'), 3500);
+    }
+
+    toastClose.addEventListener('click', () => toastBanner.classList.add('hidden'));
+
+    function getDefaultSamples() {
+      return [
+        { id: 'app-1', company: 'Stripe', role: 'Junior Frontend Developer', status: 'Interviewing', date: 'Oct 18, 2026' },
+        { id: 'app-2', company: 'Vercel', role: 'Web Operations Associate', status: 'Applied', date: 'Oct 20, 2026' },
+        { id: 'app-3', company: 'GitHub', role: 'Associate Support Engineer', status: 'Offer', date: 'Oct 22, 2026' }
+      ];
+    }
+
+    function loadApplications() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          applications = JSON.parse(saved);
+        } else {
+          applications = getDefaultSamples();
+          saveApplications();
+        }
+      } catch (err) {
+        applications = [];
+      }
+    }
+
+    function saveApplications() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(applications));
+      } catch (err) {
+        console.error('Failed to save to localStorage', err);
+      }
+    }
+
+    function getStatusBadge(status) {
+      const styles = {
+        Interviewing: 'bg-amber-100 text-amber-800 border-amber-200',
+        Offer: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        Rejected: 'bg-rose-100 text-rose-800 border-rose-200',
+        Applied: 'bg-blue-100 text-blue-800 border-blue-200'
+      };
+      const badgeStyle = styles[status] || styles.Applied;
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeStyle}">${status}</span>`;
+    }
+
+    function render() {
+      statTotal.textContent = applications.length;
+      statInterviewing.textContent = applications.filter(a => a.status === 'Interviewing').length;
+      statOffers.textContent = applications.filter(a => a.status === 'Offer').length;
+
+      const filtered = applications.filter(app => {
+        const matchesFilter = currentFilter === 'All' || app.status === currentFilter;
+        const q = searchQuery.toLowerCase();
+        const matchesSearch = !q ||
+          app.company.toLowerCase().includes(q) ||
+          app.role.toLowerCase().includes(q);
+        return matchesFilter && matchesSearch;
+      });
+
+      listCount.textContent = `${filtered.length} of ${applications.length} shown`;
+
+      if (applications.length === 0) {
+        emptyState.classList.remove('hidden');
+        emptySearchState.classList.add('hidden');
+        applicationsList.innerHTML = '';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      if (filtered.length === 0) {
+        emptySearchState.classList.remove('hidden');
+        applicationsList.innerHTML = '';
+        return;
+      }
+
+      emptySearchState.classList.add('hidden');
+
+      applicationsList.innerHTML = filtered.map(app => `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-xs transition bg-white gap-3" data-id="${app.id}">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="font-semibold text-slate-900 text-base">${escapeHtml(app.company)}</h3>
+              ${getStatusBadge(app.status)}
+            </div>
+            <p class="text-sm text-slate-600">${escapeHtml(app.role)}</p>
+            <p class="text-xs text-slate-400">Added on ${escapeHtml(app.date)}</p>
+          </div>
+          <div class="flex items-center gap-2 self-start sm:self-center">
+            <select class="status-select text-xs font-semibold rounded-lg border border-slate-300 px-2 py-1.5 bg-white text-slate-700 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer" data-id="${app.id}">
+              <option value="Applied" ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
+              <option value="Interviewing" ${app.status === 'Interviewing' ? 'selected' : ''}>Interviewing</option>
+              <option value="Offer" ${app.status === 'Offer' ? 'selected' : ''}>Offer</option>
+              <option value="Rejected" ${app.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+            </select>
+            <button type="button" class="delete-btn px-3 py-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors border border-rose-200" data-id="${app.id}">
+              Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    appForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const company = companyInput.value.trim();
+      const role = roleInput.value.trim();
+      const status = statusInput.value;
+
+      if (!company || !role) return;
+
+      const newApp = {
+        id: 'app-' + Date.now(),
+        company,
+        role,
+        status,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      };
+
+      applications.unshift(newApp);
+      saveApplications();
+      render();
+
+      companyInput.value = '';
+      roleInput.value = '';
+      statusInput.value = 'Applied';
+      companyInput.focus();
+
+      showToast(`Added ${newApp.company} (${newApp.role}) to your tracker!`, 'success');
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      render();
+    });
+
+    filterTabs.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      currentFilter = btn.getAttribute('data-filter');
+
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        if (b.getAttribute('data-filter') === currentFilter) {
+          b.className = 'filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-indigo-600 text-white';
+        } else {
+          b.className = 'filter-btn px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-slate-100 text-slate-600 hover:bg-slate-200';
+        }
+      });
+
+      render();
+    });
+
+    applicationsList.addEventListener('change', (e) => {
+      const select = e.target.closest('.status-select');
+      if (!select) return;
+
+      const id = select.getAttribute('data-id');
+      const newStatus = select.value;
+      const item = applications.find(a => a.id === id);
+
+      if (item && item.status !== newStatus) {
+        const oldStatus = item.status;
+        item.status = newStatus;
+        saveApplications();
+        render();
+        showToast(`Moved ${item.company} from "${oldStatus}" to "${newStatus}"!`, 'success');
+      }
+    });
+
+    applicationsList.addEventListener('click', (e) => {
+      const deleteBtn = e.target.closest('.delete-btn');
+      if (!deleteBtn) return;
+
+      const id = deleteBtn.getAttribute('data-id');
+      const itemToDelete = applications.find(a => a.id === id);
+      applications = applications.filter(a => a.id !== id);
+      saveApplications();
+      render();
+
+      if (itemToDelete) {
+        showToast(`Removed ${itemToDelete.company} from your pipeline.`, 'info');
+      }
+    });
+
+    // Export applications as JSON download
+    exportBtn.addEventListener('click', () => {
+      if (applications.length === 0) {
+        showToast('No applications to export.', 'info');
+        return;
+      }
+      try {
+        const jsonStr = JSON.stringify(applications, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `careertrack-export-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Exported backup file successfully!', 'success');
+      } catch (err) {
+        showToast('Export failed. Check browser permissions.', 'info');
+      }
+    });
+
+    // Import applications from JSON file
+    importFile.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (Array.isArray(parsed) && parsed.every(item => item.company && item.role && item.status)) {
+            applications = parsed;
+            saveApplications();
+            render();
+            showToast(`Imported ${parsed.length} applications from backup!`, 'success');
+          } else {
+            showToast('Invalid backup file structure.', 'info');
+          }
+        } catch (err) {
+          showToast('Failed to parse the backup file.', 'info');
+        }
+        importFile.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    // Reset data to defaults
+    resetBtn.addEventListener('click', () => {
+      applications = getDefaultSamples();
+      saveApplications();
+      render();
+      showToast('Reset pipeline with sample applications.', 'info');
+    });
+
+    loadApplications();
+    render();
+  </script>
+</body>
+</html>
